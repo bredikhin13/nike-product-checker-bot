@@ -1,6 +1,10 @@
+const logger = require("./logger");
+
 exports.handler = async (event) => {
     const expectedToken = process.env.TELEGRAM_SECRET;
     const actualToken = event.headers['X-Telegram-Bot-Api-Secret-Token'];
+
+    logger.info({expectedToken, actualToken}, "Tokens :)")
 
     if (actualToken !== expectedToken) {
         return {
