@@ -14,6 +14,7 @@ resource "aws_apigatewayv2_integration" "lambda" {
 resource "aws_apigatewayv2_route" "webhook" {
   api_id        = aws_apigatewayv2_api.telegram_webhook.id
   route_key     = "POST /telegram"
+  authorization_type = "CUSTOM"
   authorizer_id = aws_apigatewayv2_authorizer.telegram.id
   target        = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
