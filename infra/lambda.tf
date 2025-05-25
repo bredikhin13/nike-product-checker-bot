@@ -5,8 +5,8 @@ resource "aws_lambda_function" "product_checker" {
   role          = aws_iam_role.lambda_exec_role.arn
   timeout       = 10
 
-  filename         = "${path.module}/dist/checker.zip"
-  source_code_hash = filebase64sha256("${path.module}/dist/checker.zip")
+  filename         = "${path.module}/dist/lambda.zip"
+  source_code_hash = filebase64sha256("${path.module}/dist/lambda.zip")
 
   environment {
     variables = {
@@ -20,8 +20,8 @@ resource "aws_lambda_function" "telegram_webhook" {
   runtime       = "nodejs20.x"
   handler       = "telegramWebhook.handler"
 
-  filename         = "${path.module}/dist/checker.zip"
-  source_code_hash = filebase64sha256("${path.module}/dist/checker.zip")
+  filename         = "${path.module}/dist/lambda.zip"
+  source_code_hash = filebase64sha256("${path.module}/dist/lambda.zip")
 
   role = aws_iam_role.lambda_exec_role.arn
 

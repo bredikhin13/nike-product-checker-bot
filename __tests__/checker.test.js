@@ -71,7 +71,7 @@ describe('checker.handler', () => {
         userId: 789,
         url: 'https://example.com',
         frequency: 60,
-        lastCheckedAt: 1748115163295,
+        lastCheckedAt: Date.now() - 1000 * 60 * 5,
       }
     ]);
 
