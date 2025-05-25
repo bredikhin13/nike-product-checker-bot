@@ -16,4 +16,9 @@ resource "aws_lambda_permission" "allow_cloudwatch" {
   principal     = "events.amazonaws.com"
   source_arn    = aws_cloudwatch_event_rule.every_minute.arn
 }
-  
+
+resource "aws_cloudwatch_log_group" "lambda_logs" {
+  for_each          = local.lambda_functions
+  name              = "/aws/lambda/${each.value}"
+  retention_in_days = local.logs_retantion_days
+}
