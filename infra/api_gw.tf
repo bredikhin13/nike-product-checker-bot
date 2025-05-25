@@ -12,9 +12,10 @@ resource "aws_apigatewayv2_integration" "lambda" {
 }
 
 resource "aws_apigatewayv2_route" "webhook" {
-  api_id    = aws_apigatewayv2_api.telegram_webhook.id
-  route_key = "POST /telegram"
-  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+  api_id        = aws_apigatewayv2_api.telegram_webhook.id
+  route_key     = "POST /telegram"
+  authorizer_id = aws_apigatewayv2_authorizer.telegram.id
+  target        = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
 
 resource "aws_apigatewayv2_stage" "default" {
@@ -25,4 +26,21 @@ resource "aws_apigatewayv2_stage" "default" {
     throttling_rate_limit  = 100
     throttling_burst_limit = 100
   }
+}
+
+resource "aws_apigatewayv2_authorizer" "telegram" {
+  api_id          = aws_apigatewayv2_api.telegram_webhook.id
+  name            = "telegram-authorizer"
+  authorizer_type = "REQUEST"
+
+  identity_sources = [
+    "route.request.header.X-Telegram-Bot-Api-Secret-Token"
+  ]
+
+  authorizer_uri = aws_lambda_function.authorizer.invoke_arn
+
+  authorizer_payload_format_version = "2.0"
+
+  enable_simple_responses          = false
+  authorizer_result_ttl_in_seconds = 0
 }
