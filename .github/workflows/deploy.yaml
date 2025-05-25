@@ -12,7 +12,6 @@ jobs:
   run-tests:
     name: Build and test
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
 
     steps:
       - name: Checkout
@@ -42,8 +41,9 @@ jobs:
 
   terraform-plan:
     name: Terraform Plan
+    needs: run-tests
     runs-on: ubuntu-latest
-    if: github.event_name == 'push'
+    if: github.event_name == 'pull_request'
 
     steps:
       - name: Checkout
@@ -54,6 +54,13 @@ jobs:
         with:
           name: lambda-zip
           path: infra/dist
+
+      - name: Setup AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-central-1
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
@@ -67,13 +74,10 @@ jobs:
       - name: Terraform Plan
         working-directory: infra
         run: terraform plan -var="telegram_token=${{ secrets.TELEGRAM_TOKEN }}"
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: eu-central-1
 
   deploy:
     name: Deploy
+    needs: run-tests
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
@@ -87,6 +91,13 @@ jobs:
           name: lambda-zip
           path: infra/dist
 
+      - name: Setup AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-central-1
+
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
         with:
@@ -99,7 +110,3 @@ jobs:
       - name: Terraform Apply
         working-directory: infra
         run: terraform apply -auto-approve -var="telegram_token=${{ secrets.TELEGRAM_TOKEN }}"
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: eu-central-1
