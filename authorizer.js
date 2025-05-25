@@ -2,7 +2,7 @@ const logger = require("./logger");
 
 exports.handler = async (event) => {
     const expectedToken = process.env.TELEGRAM_SECRET;
-    const actualToken = event.headers['X-Telegram-Bot-Api-Secret-Token'];
+    const actualToken = event.headers['x-telegram-bot-api-secret-token'];
     logger.info({event}, "Event")
     logger.info({expectedToken, actualToken}, "Tokens :)")
 
