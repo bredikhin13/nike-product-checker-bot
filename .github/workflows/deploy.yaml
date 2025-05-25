@@ -76,10 +76,10 @@ jobs:
 
       - name: Terraform Plan
         working-directory: infra
-        env:
-          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
-          TELEGRAM_SECRET: ${{ secrets.TELEGRAM_SECRET }}
-        run: terraform plan
+        run: > 
+          terraform plan 
+          -var="telegram_token=${{ secrets.TELEGRAM_TOKEN }}"
+          -var="telegram_api_secret=${{ secrets.TELEGRAM_SECRET }}"
 
   deploy:
     name: Deploy
@@ -115,7 +115,7 @@ jobs:
 
       - name: Terraform Apply
         working-directory: infra
-        env:
-          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
-          TELEGRAM_SECRET: ${{ secrets.TELEGRAM_SECRET }}
-        run: terraform apply -auto-approve
+        run: > 
+          terraform apply -auto-approve
+          -var="telegram_token=${{ secrets.TELEGRAM_TOKEN }}"
+          -var="telegram_api_secret=${{ secrets.TELEGRAM_SECRET }}"
