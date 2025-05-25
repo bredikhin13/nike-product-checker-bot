@@ -11,6 +11,8 @@ exports.handler = async (event) => {
     const decompressed = zlib.gunzipSync(payload).toString('utf-8');
     const parsed = JSON.parse(decompressed);
 
+    logger.info({logGroup: parsed.logGroup, logStream: parsed.logStream}, "Log event received")
+
     const streams = [
         {
             stream: {
@@ -46,4 +48,6 @@ exports.handler = async (event) => {
 
     req.write(body);
     req.end();
+
+    logger.info("Logs sent!")
 };
