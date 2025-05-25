@@ -1,0 +1,24 @@
+{
+  "name": "product-checker-bot",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.538.0",
+    "@aws-sdk/util-dynamodb": "^3.538.0",
+    "axios": "^1.6.8",
+    "dayjs": "^1.11.10",
+    "node-telegram-bot-api": "^0.61.0",
+    "pino": "^9.7.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "pino-pretty": "^13.0.0"
+  }
+}
