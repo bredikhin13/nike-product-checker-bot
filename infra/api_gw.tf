@@ -33,9 +33,7 @@ resource "aws_apigatewayv2_authorizer" "telegram" {
   name            = "telegram-authorizer"
   authorizer_type = "REQUEST"
 
-  identity_sources = [
-    "route.request.header.X-Telegram-Bot-Api-Secret-Token"
-  ]
+  identity_sources = ["$request.header.X-Telegram-Bot-Api-Secret-Token"]
 
   authorizer_uri = aws_lambda_function.authorizer.invoke_arn
 
