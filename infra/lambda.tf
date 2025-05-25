@@ -40,3 +40,27 @@ resource "aws_lambda_permission" "apigw" {
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_apigatewayv2_api.telegram_webhook.execution_arn}/*/*"
 }
+
+resource "aws_lambda_function" "authorizer" {
+  function_name    = "telegram-authorizer"
+  role             = aws_iam_role.lambda_exec_role.arn
+  handler          = "authorizer.handler"
+  runtime          = "nodejs20.x"
+  source_code_hash = filebase64sha256("${path.module}/dist/lambda.zip")
+
+  filename = "${path.module}/dist/lambda.zip"
+
+  environment {
+    variables = {
+      TELEGRAM_SECRET = var.telegram_api_secret
+    }
+  }
+}
+
+resource "aws_lambda_permission" "allow_apigw_invoke_authorizer" {
+  statement_id  = "AllowExecutionFromAPIGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.authorizer.arn
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.telegram_webhook.execution_arn}/*/*"
+}

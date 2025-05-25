@@ -1,0 +1,30 @@
+exports.handler = async (event) => {
+    const expectedToken = process.env.TELEGRAM_SECRET;
+    const actualToken = event.headers['X-Telegram-Bot-Api-Secret-Token'];
+
+    if (actualToken !== expectedToken) {
+        return {
+            principalId: 'unauthorized',
+            policyDocument: {
+                Version: '2012-10-17',
+                Statement: [{
+                    Action: 'execute-api:Invoke',
+                    Effect: 'Deny',
+                    Resource: event.methodArn,
+                }],
+            },
+        };
+    }
+
+    return {
+        principalId: 'telegram',
+        policyDocument: {
+            Version: '2012-10-17',
+            Statement: [{
+                Action: 'execute-api:Invoke',
+                Effect: 'Allow',
+                Resource: event.methodArn,
+            }],
+        },
+    };
+};
