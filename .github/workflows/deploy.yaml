@@ -76,10 +76,13 @@ jobs:
 
       - name: Terraform Plan
         working-directory: infra
-        run: > 
+        run: >
           terraform plan 
           -var="telegram_token=${{ secrets.TELEGRAM_TOKEN }}"
           -var="telegram_api_secret=${{ secrets.TELEGRAM_SECRET }}"
+          -var="loki_url=${{ secrets.LOKI_URL }}" 
+          -var="loki_user=${{ secrets.LOKI_USER }}" 
+          -var="loki_pass=${{ secrets.LOKI_PASS }}" 
 
   deploy:
     name: Deploy
@@ -115,7 +118,10 @@ jobs:
 
       - name: Terraform Apply
         working-directory: infra
-        run: > 
+        run: >
           terraform apply -auto-approve
           -var="telegram_token=${{ secrets.TELEGRAM_TOKEN }}"
           -var="telegram_api_secret=${{ secrets.TELEGRAM_SECRET }}"
+          -var="loki_url=${{ secrets.LOKI_URL }}" 
+          -var="loki_user=${{ secrets.LOKI_USER }}" 
+          -var="loki_pass=${{ secrets.LOKI_PASS }}"

@@ -11,3 +11,5 @@ terraform {
     encrypt        = true
   }
 }
+
+data "aws_caller_identity" "current" {}

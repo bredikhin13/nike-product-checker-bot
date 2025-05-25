@@ -64,3 +64,28 @@ resource "aws_lambda_permission" "allow_apigw_invoke_authorizer" {
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_apigatewayv2_api.telegram_webhook.execution_arn}/*/*"
 }
+
+resource "aws_lambda_function" "logs_exporter" {
+  function_name = "logs-exporter"
+  handler       = "logsExporter.handler"
+  runtime       = "nodejs20.x"
+  filename      = "${path.module}/dist/lambda.zip"
+  source_code_hash = filebase64sha256("${path.module}/dist/lambda.zip")
+  role          = aws_iam_role.lambda_exec_role.arn
+
+  environment {
+    variables = {
+      LOKI_URL  = var.loki_url
+      LOKI_USER = var.loki_user
+      LOKI_PASS = var.loki_pass
+    }
+  }
+}
+
+resource "aws_lambda_permission" "logs_exporter_permission" {
+  statement_id  = "AllowCloudWatchInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.logs_exporter.function_name
+  principal     = "logs.${var.region}.amazonaws.com"
+  source_arn    = "arn:aws:logs:${var.region}:${data.aws_caller_identity.current.account_id}:log-group:*"
+}
