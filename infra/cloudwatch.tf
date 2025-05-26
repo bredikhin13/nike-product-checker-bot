@@ -25,7 +25,10 @@ resource "aws_cloudwatch_log_group" "lambda_logs" {
 }
 
 resource "aws_cloudwatch_log_subscription_filter" "logs_subscription" {
-  for_each = local.lambda_functions
+  for_each = {
+    for name, path in local.lambda_functions : name => path
+    if name != "log_exporter"
+  }
 
   name = "logs-subscription-for-${each.key}"
   log_group_name = "/aws/lambda/${each.value}"
