@@ -33,7 +33,6 @@ resource "aws_cloudwatch_log_subscription_filter" "logs_subscription" {
   destination_arn = aws_lambda_function.logs_exporter.arn
 
   depends_on = [
-    aws_lambda_function.logs_exporter,
-    aws_lambda_permission.logs_exporter_permission
+    aws_cloudwatch_log_group.lambda_logs
   ]
 }
