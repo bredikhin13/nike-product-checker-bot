@@ -1,53 +1,41 @@
 const zlib = require('zlib');
-const https = require('https');
+const axios = require('axios');
 const logger = require("./logger");
 
-const LOKI_URL = process.env.LOKI_URL;
-const LOKI_USER = process.env.LOKI_USER;
-const LOKI_PASS = process.env.LOKI_PASS;
-
 exports.handler = async (event) => {
-    const payload = Buffer.from(event.awslogs.data, 'base64');
-    const decompressed = zlib.gunzipSync(payload).toString('utf-8');
-    const parsed = JSON.parse(decompressed);
+    try {
+        const payload = Buffer.from(event.awslogs.data, 'base64');
+        const decompressed = zlib.gunzipSync(payload).toString('utf-8');
+        const parsed = JSON.parse(decompressed);
 
-    logger.info({logGroup: parsed.logGroup, logStream: parsed.logStream}, "Log event received")
+        logger.info({ logGroup: parsed.logGroup, logStream: parsed.logStream }, "Log event received");
 
-    const streams = [
-        {
-            stream: {
-                job: 'lambda',
-                log_group: parsed.logGroup,
-                log_stream: parsed.logStream
-            },
-            values: parsed.logEvents.map(le => [Date.now() * 1e6 + '', le.message])
-        }
-    ];
-
-    const body = JSON.stringify({streams});
-
-    const req = https.request(
-        LOKI_URL,
-        {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization':
-                    'Basic ' +
-                    Buffer.from(`${LOKI_USER}:${LOKI_PASS}`).toString('base64')
+        const streams = [
+            {
+                stream: {
+                    job: 'lambda',
+                    log_group: parsed.logGroup,
+                    log_stream: parsed.logStream
+                },
+                values: parsed.logEvents.map(le => [Date.now() * 1e6 + '', le.message])
             }
-        },
-        (res) => {
-            logger.info(`Loki responded with status ${res.statusCode}`);
-        }
-    );
+        ];
 
-    req.on('error', (e) => {
-        logger.error({e}, 'Error sending logs to Loki');
-    });
+        await axios.post(
+            process.env.LOKI_URL,
+            { streams },
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Basic ' + Buffer.from(`${process.env.LOKI_USER}:${process.env.LOKI_PASS}`).toString('base64')
+                },
+                timeout: 5000
+            }
+        );
 
-    req.write(body);
-    req.end();
-
-    logger.info("Logs sent!")
+        logger.info("Logs sent!");
+    } catch (err) {
+        logger.error({ err }, 'Error sending logs to Loki');
+        throw err;
+    }
 };
