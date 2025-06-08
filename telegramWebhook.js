@@ -66,7 +66,7 @@ exports.handler = async (event) => {
         callback_data: JSON.stringify({
           selectedSize: size.displayValue,
           sizeUrl: size.url,
-          originalUrl: userUrl
+          originalUrl: url
         })
       }));
 
