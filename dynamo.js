@@ -11,17 +11,56 @@ const {unmarshall, marshall} = require('@aws-sdk/util-dynamodb');
 
 const client = new DynamoDBClient({region: 'eu-central-1'}); // замените при необходимости
 
-const TABLE_NAME = 'Links';
+const LINKS_TABLE_NAME = 'Links';
+const PENDING_SELECTIONS_TABLE_NAME = "PendingSelections";
+
+async function savePendingSelection(chatId, pid, productUrl, sizes) {
+    const expiresAt = Math.floor(Date.now() / 1000) + 3600; // TTL = 1 час
+    await client.send(new PutCommand({
+        TableName: PENDING_SELECTIONS_TABLE_NAME,
+        Item: { chatId, pid, productUrl, sizes, expiresAt }
+    }));
+}
+
+async function getPendingSelection(chatId, pid) {
+    const res = await client.send(new GetCommand({
+        TableName: PENDING_SELECTIONS_TABLE_NAME,
+        Key: { chatId, pid }
+    }));
+    return res.Item;
+}
+
+async function removePendingSelection(chatId, pid) {
+    await client.send(new DeleteCommand({
+        TableName: PENDING_SELECTIONS_TABLE_NAME,
+        Key: { chatId, pid }
+    }));
+}
+
+async function addLinkV2(chatId, productUrl, selectedSize, statusUrl) {
+    const now = Date.now();
+    await client.send(new PutCommand({
+        TableName: LINKS_TABLE,
+        Item: {
+            chatId,
+            url: productUrl,
+            selectedSize,
+            statusUrl,
+            createdAt: Date.now(),
+            lastCheckedAt: now
+        }
+    }));
+}
 
 async function getAllLinks() {
-    const command = new ScanCommand({TableName: TABLE_NAME});
+    const command = new ScanCommand({TableName: LINKS_TABLE_NAME});
     const response = await client.send(command);
     return response.Items.map(unmarshall);
 }
 
 async function updateLastChecked({userId, url}) {
     const command = new UpdateItemCommand({
-        TableName: TABLE_NAME,
+        TableName: LINKS_TABLE_NAME,
         Key: {
             userId: {S: String(userId)},
             url: {S: url},
@@ -45,21 +84,21 @@ const addLink = async (userId, url, frequency) => {
     };
 
     await client.send(new PutItemCommand({
-        TableName: TABLE_NAME,
+        TableName: LINKS_TABLE_NAME,
         Item: marshall(item),
     }));
 };
 
 const removeLink = async (userId, url) => {
     await client.send(new DeleteItemCommand({
-        TableName: TABLE_NAME,
+        TableName: LINKS_TABLE_NAME,
         Key: marshall({userId, url}),
     }));
 };
 
 const listLinks = async (userId) => {
     const res = await client.send(new QueryCommand({
-        TableName: TABLE_NAME,
+        TableName: LINKS_TABLE_NAME,
         KeyConditionExpression: "userId = :uid",
         ExpressionAttributeValues: {
             ":uid": {S: userId},
@@ -69,4 +108,4 @@ const listLinks = async (userId) => {
     return res.Items.map(unmarshall);
 };
 
-module.exports = {getAllLinks, addLink, removeLink, listLinks, updateLastChecked};
+module.exports = {getAllLinks, addLink, removeLink, listLinks, updateLastChecked, getPendingSelection, removePendingSelection, savePendingSelection, addLinkV2};

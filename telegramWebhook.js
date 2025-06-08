@@ -1,13 +1,18 @@
-const { addLink, removeLink, listLinks } = require("./dynamo");
+const axios = require("axios");
 const logger = require("./logger");
-const { send, sendButtons} = require('./telegram');
-const axios = require('axios');
+const { send, sendSizesKeyboard} = require('./telegram');
+const { addLink, removeLink, listLinks, getPendingSelection, removePendingSelection, savePendingSelection, addLinkV2} = require("./dynamo");
 
 exports.handler = async (event) => {
   logger.info({ body: event.body }, "Incoming Telegram update");
   const body = JSON.parse(event.body);
-  const message = body.message;
 
+  if (body.callback_query) {
+    await handleCallbackQuery(body.callback_query);
+    return { statusCode: 200, body: "OK" };
+  }
+
+  const message = body.message;
   if (!message || !message.text) {
     return { statusCode: 200, body: "No message to handle" };
   }
@@ -40,37 +45,8 @@ exports.handler = async (event) => {
         await send(chatId, "📋 Ваши ссылки:\n" + lines.join("\n"));
       }
     } else if (text.startsWith("/addV2 ")) {
-      const [, url, freqStr] = text.split(" ");
-      logger.info({ url, freqStr }, "Add command");
-
-      const pidMatch = url.match(/\/([A-Z0-9-]+)\.html/);
-      if (!pidMatch) {
-        logger.error('Invalid URL format, pid not found', {url})
-        await send(chatId, 'Invalid URL format, pid not found')
-        return { statusCode: 200, body: "OK" };
-      }
-      const pid = pidMatch[1];
-
-      const apiUrl = `https://www.nike.ae/on/demandware.store/Sites-Nike_AE-Site/en_UG/Product-Variation?pid=${pid}&quantity=1`;
-      const response = await axios.get(apiUrl);
-      const product = response.data.product;
-      const vendorSizeAttr = product.variationAttributes.find(attr => attr.attributeId === 'vendorSize');
-      if (!vendorSizeAttr) {
-        logger.error('No vendorSize attribute found', {product})
-        await send(chatId, 'No vendorSize attribute found')
-        return { statusCode: 200, body: "OK" };
-      }
-      const sizes = vendorSizeAttr.values.US || [];
-      const inlineButtons = sizes.map(size => ({
-        text: size.displayValue,
-        callback_data: JSON.stringify({
-          selectedSize: size.displayValue,
-          sizeUrl: size.url,
-          originalUrl: url
-        })
-      }));
-
-      await sendButtons(chatId, `Выбери размер`, inlineButtons);
+      logger.info({ chatId, text }, "Handling /addV2");
+      await handleAddCommand(chatId, text);
     } else {
       await send(chatId, "❓ Неизвестная команда.");
     }
@@ -82,3 +58,62 @@ exports.handler = async (event) => {
     return { statusCode: 200, body: "Error" };
   }
 };
+
+async function handleAddCommand(chatId, text) {
+  const [, url] = text.split(" ");
+  const pidMatch = url.match(/\/([A-Z0-9\-]+)\.html$/);
+  if (!pidMatch) throw new Error("Невалидная ссылка на продукт Nike");
+
+  const pid = pidMatch[1];
+  const variationUrl = `https://www.nike.ae/on/demandware.store/Sites-Nike_AE-Site/en_UG/Product-Variation?pid=${pid}&quantity=1`;
+
+  const { data } = await axios.get(variationUrl);
+
+  const sizeAttr = data.product.variationAttributes.find(
+      attr => attr.attributeId === "vendorSize"
+  );
+
+  if (!sizeAttr || !sizeAttr.values?.US?.length)
+    throw new Error("Нет доступных US размеров");
+
+  const sizes = sizeAttr.values.US.map(v => ({
+    size: v.displayValue,
+    url: v.url,
+  }));
+
+  await savePendingSelection(chatId, pid, url, sizes);
+
+  const message = `Выбери размер для \`${data.product.productName}\``
+  await sendSizesKeyboard(chatId, message, pid, sizes);
+}
+
+async function handleCallbackQuery(callbackQuery) {
+  const { data: callbackData, message } = callbackQuery;
+  const chatId = message.chat.id.toString();
+
+  const parts = callbackData.split(":");
+  if (parts[0] !== "size" || parts.length !== 3) {
+    await send(chatId, "Неверный формат данных");
+    return;
+  }
+  const pid = parts[1];
+  const selectedSize = parts[2];
+
+  const pending = await getPendingSelection(chatId, pid);
+  if (!pending) {
+    await send(chatId, "Срок ожидания выбора истёк или данные не найдены.");
+    return;
+  }
+
+  await removePendingSelection(chatId, pid);
+
+  const sizeObj = pending.sizes.find(s => s.size === selectedSize);
+  if (!sizeObj) {
+    await send(chatId, "Выбранный размер не найден.");
+    return;
+  }
+
+  await addLinkV2(chatId, pending.originalUrl, selectedSize, sizeObj.url);
+
+  await send(chatId, `✅ Добавлено: ${pending.originalUrl} (Размер: ${selectedSize})`);
+}
