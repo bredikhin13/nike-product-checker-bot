@@ -5,7 +5,7 @@ const {
     PutItemCommand,
     UpdateItemCommand,
     DeleteItemCommand,
-    QueryCommand
+    QueryCommand, GetItemCommand
 } = require('@aws-sdk/client-dynamodb');
 const {unmarshall, marshall} = require('@aws-sdk/util-dynamodb');
 
@@ -16,14 +16,14 @@ const PENDING_SELECTIONS_TABLE_NAME = "PendingSelections";
 
 async function savePendingSelection(chatId, pid, productUrl, sizes) {
     const expiresAt = Math.floor(Date.now() / 1000) + 3600; // TTL = 1 час
-    await client.send(new PutCommand({
+    await client.send(new PutItemCommand({
         TableName: PENDING_SELECTIONS_TABLE_NAME,
         Item: { chatId, pid, productUrl, sizes, expiresAt }
     }));
 }
 
 async function getPendingSelection(chatId, pid) {
-    const res = await client.send(new GetCommand({
+    const res = await client.send(new GetItemCommand({
         TableName: PENDING_SELECTIONS_TABLE_NAME,
         Key: { chatId, pid }
     }));
@@ -31,7 +31,7 @@ async function getPendingSelection(chatId, pid) {
 }
 
 async function removePendingSelection(chatId, pid) {
-    await client.send(new DeleteCommand({
+    await client.send(new DeleteItemCommand({
         TableName: PENDING_SELECTIONS_TABLE_NAME,
         Key: { chatId, pid }
     }));
@@ -39,7 +39,7 @@ async function removePendingSelection(chatId, pid) {
 
 async function addLinkV2(chatId, productUrl, selectedSize, statusUrl) {
     const now = Date.now();
-    await client.send(new PutCommand({
+    await client.send(new PutItemCommand({
         TableName: LINKS_TABLE,
         Item: {
             chatId,
