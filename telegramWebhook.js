@@ -1,6 +1,7 @@
 const { addLink, removeLink, listLinks } = require("./dynamo");
 const logger = require("./logger");
-const { send } = require('./telegram');
+const { send, sendButtons} = require('./telegram');
+const axios = require('axios');
 
 exports.handler = async (event) => {
   logger.info({ body: event.body }, "Incoming Telegram update");
@@ -38,6 +39,38 @@ exports.handler = async (event) => {
         const lines = links.map(l => `• ${l.url} (${l.frequency} мин)`);
         await send(chatId, "📋 Ваши ссылки:\n" + lines.join("\n"));
       }
+    } else if (text.startsWith("/addV2 ")) {
+      const [, url, freqStr] = text.split(" ");
+      logger.info({ url, freqStr }, "Add command");
+
+      const pidMatch = url.match(/\/([A-Z0-9-]+)\.html/);
+      if (!pidMatch) {
+        logger.error('Invalid URL format, pid not found', {url})
+        await send(chatId, 'Invalid URL format, pid not found')
+        return { statusCode: 200, body: "OK" };
+      }
+      const pid = pidMatch[1];
+
+      const apiUrl = `https://www.nike.ae/on/demandware.store/Sites-Nike_AE-Site/en_UG/Product-Variation?pid=${pid}&quantity=1`;
+      const response = await axios.get(apiUrl);
+      const product = response.data.product;
+      const vendorSizeAttr = product.variationAttributes.find(attr => attr.attributeId === 'vendorSize');
+      if (!vendorSizeAttr) {
+        logger.error('No vendorSize attribute found', {product})
+        await send(chatId, 'No vendorSize attribute found')
+        return { statusCode: 200, body: "OK" };
+      }
+      const sizes = vendorSizeAttr.values.US || [];
+      const inlineButtons = sizes.map(size => ({
+        text: size.displayValue,
+        callback_data: JSON.stringify({
+          selectedSize: size.displayValue,
+          sizeUrl: size.url,
+          originalUrl: userUrl
+        })
+      }));
+
+      await sendButtons(chatId, `Выбери размер`, inlineButtons);
     } else {
       await send(chatId, "❓ Неизвестная команда.");
     }
