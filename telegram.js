@@ -1,12 +1,11 @@
 const axios = require("axios");
 
-const send = (chatId, text) => {
+const send = async (chatId, text) => {
     const token = process.env.TELEGRAM_TOKEN;
     const url = `https://api.telegram.org/bot${token}/sendMessage`;
-    return fetch(url, {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({chat_id: chatId, text}),
+    return await axios.post(url, {
+        chat_id: chatId,
+        text: text,
     });
 };
 

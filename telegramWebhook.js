@@ -105,7 +105,7 @@ async function handleCallbackQuery(callbackQuery) {
     await send(chatId, "Срок ожидания выбора истёк или данные не найдены.");
     return;
   }
-
+  logger.info({chatId, pid}, "Removing pending selection");
   await removePendingSelection(chatId, pid);
 
   const sizeObj = pending.sizes.find(s => s.size === selectedSize);
