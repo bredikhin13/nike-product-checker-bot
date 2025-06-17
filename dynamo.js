@@ -34,7 +34,7 @@ async function savePendingSelection(userId, pid, productUrl, sizes) {
 async function getPendingSelection(userId, pid) {
     const res = await client.send(new GetItemCommand({
         TableName: PENDING_SELECTIONS_TABLE_NAME,
-        Key: { userId, pid }
+        Key: marshall({ userId, pid })
     }));
     const item = unmarshall(res.Item);
     if (!item) return null;
