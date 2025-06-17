@@ -12,13 +12,13 @@ exports.handler = async () => {
     const now = Date.now();
 
     for (const link of links) {
-      const {userId, url, frequency, lastCheckedAt} = link;
+      const {userId, url, frequency, lastCheckedAt, statusUrl} = link;
       const elapsedMinutes = (now - lastCheckedAt) / 60000;
 
       if (elapsedMinutes < frequency) continue;
 
       try {
-        const res = await axios.get(url);
+        const res = await axios.get(statusUrl || url);
         const available = res.data?.product?.available === true;
 
         if (available) {
