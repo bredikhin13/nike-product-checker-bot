@@ -31,13 +31,13 @@ resource "aws_dynamodb_table" "tf_lock" {
 }
 
 resource "aws_dynamodb_table" "pending_selections" {
-  name         = "Links"
+  name         = "PendingSelections"
   billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "chatId"
+  hash_key     = "userId"
   range_key    = "pid"
 
   attribute {
-    name = "chatId"
+    name = "userId"
     type = "S"
   }
 

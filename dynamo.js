@@ -14,10 +14,16 @@ const client = new DynamoDBClient({region: 'eu-central-1'}); // замените
 const LINKS_TABLE_NAME = 'Links';
 const PENDING_SELECTIONS_TABLE_NAME = "PendingSelections";
 
-async function savePendingSelection(chatId, pid, productUrl, sizes) {
+async function savePendingSelection(userId, pid, productUrl, sizes) {
     const expiresAt = Math.floor(Date.now() / 1000) + 3600; // TTL = 1 час
     const sizesStr = JSON.stringify(sizes);
-    const item = { chatId, pid, productUrl, sizesStr, expiresAt }
+    const item = {
+        userId,
+        pid,
+        productUrl,
+        sizes: sizesStr,
+        expiresAt
+    }
     logger.info({sizesStr, item}, "Saving pending selection");
     await client.send(new PutItemCommand({
         TableName: PENDING_SELECTIONS_TABLE_NAME,
@@ -25,27 +31,27 @@ async function savePendingSelection(chatId, pid, productUrl, sizes) {
     }));
 }
 
-async function getPendingSelection(chatId, pid) {
+async function getPendingSelection(userId, pid) {
     const res = await client.send(new GetItemCommand({
         TableName: PENDING_SELECTIONS_TABLE_NAME,
-        Key: { chatId, pid }
+        Key: { userId, pid }
     }));
-    const item = res.Item;
+    const item = unmarshall(res.Item);
     if (!item) return null;
 
     return {
-        chatId: item.chatId.S,
-        productId: item.productId.S,
-        originalUrl: item.originalUrl.S,
-        createdAt: parseInt(item.createdAt.N),
-        sizes: JSON.parse(item.sizes.S),
+        userId: item.userId,
+        productId: item.productId,
+        originalUrl: item.originalUrl,
+        createdAt: item.createdAt,
+        sizes: JSON.parse(item.sizes),
     };
 }
 
-async function removePendingSelection(chatId, pid) {
+async function removePendingSelection(userId, pid) {
     await client.send(new DeleteItemCommand({
         TableName: PENDING_SELECTIONS_TABLE_NAME,
-        Key: { chatId, pid }
+        Key: { userId, pid }
     }));
 }
 
