@@ -16,9 +16,10 @@ const PENDING_SELECTIONS_TABLE_NAME = "PendingSelections";
 
 async function savePendingSelection(chatId, pid, productUrl, sizes) {
     const expiresAt = Math.floor(Date.now() / 1000) + 3600; // TTL = 1 час
+    const sizesStr = JSON.stringify(sizes);
     await client.send(new PutItemCommand({
         TableName: PENDING_SELECTIONS_TABLE_NAME,
-        Item: { chatId, pid, productUrl, sizes, expiresAt }
+        Item: { chatId, pid, productUrl, sizesStr, expiresAt }
     }));
 }
 
@@ -27,7 +28,16 @@ async function getPendingSelection(chatId, pid) {
         TableName: PENDING_SELECTIONS_TABLE_NAME,
         Key: { chatId, pid }
     }));
-    return res.Item;
+    const item = res.Item;
+    if (!item) return null;
+
+    return {
+        chatId: item.chatId.S,
+        productId: item.productId.S,
+        originalUrl: item.originalUrl.S,
+        createdAt: parseInt(item.createdAt.N),
+        sizes: JSON.parse(item.sizes.S),
+    };
 }
 
 async function removePendingSelection(chatId, pid) {
