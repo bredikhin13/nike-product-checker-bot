@@ -81,7 +81,7 @@ async function handleAddCommand(chatId, text) {
     url: v.url,
   }));
 
-  logger.info("Saving exising sizes", {sizes});
+  logger.info({sizes}, "Saving exising sizes");
   await savePendingSelection(chatId, pid, url, sizes);
 
   const message = `Выбери размер для \`${data.product.productName}\``
