@@ -29,4 +29,21 @@ resource "aws_dynamodb_table" "tf_lock" {
     prevent_destroy = true
   }
 }
+
+resource "aws_dynamodb_table" "pending_selections" {
+  name         = "Links"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "chatId"
+  range_key    = "pid"
+
+  attribute {
+    name = "chatId"
+    type = "S"
+  }
+
+  attribute {
+    name = "pid"
+    type = "S"
+  }
+}
   

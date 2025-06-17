@@ -39,3 +39,26 @@ resource "aws_iam_role_policy" "lambda_dynamodb_policy" {
     ]
   })
 }
+
+resource "aws_iam_role_policy" "lambda_dynamodb_policy_pending_selections" {
+  name = "LambdaDynamoDBPolicy"
+  role = aws_iam_role.lambda_exec_role.name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "dynamodb:PutItem",
+          "dynamodb:GetItem",
+          "dynamodb:UpdateItem",
+          "dynamodb:DeleteItem",
+          "dynamodb:Scan",
+          "dynamodb:Query"
+        ]
+        Resource = aws_dynamodb_table.pending_selections.arn
+      }
+    ]
+  })
+}
