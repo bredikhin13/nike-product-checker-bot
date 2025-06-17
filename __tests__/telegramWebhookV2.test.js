@@ -118,7 +118,7 @@ describe("telegramWebhook", () => {
 
     test("callback with valid selection", async () => {
         dynamo.getPendingSelection.mockResolvedValue({
-            originalUrl: "https://nike.com/item",
+            productUrl: "https://nike.com/item",
             sizes: [{ size: "9", url: "https://nike.com/size9" }]
         });
 

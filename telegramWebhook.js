@@ -114,7 +114,7 @@ async function handleCallbackQuery(callbackQuery) {
     return;
   }
 
-  await addLinkV2(chatId, pending.originalUrl, selectedSize, sizeObj.url);
+  await addLinkV2(chatId, pending.productUrl, selectedSize, sizeObj.url);
 
-  await send(chatId, `✅ Добавлено: ${pending.originalUrl} (Размер: ${selectedSize})`);
+  await send(chatId, `✅ Добавлено: ${pending.productUrl} (Размер: ${selectedSize})`);
 }

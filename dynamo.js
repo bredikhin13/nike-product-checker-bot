@@ -45,9 +45,8 @@ async function getPendingSelection(userId, pid) {
 
     return {
         userId: item.userId,
-        productId: item.productId,
-        originalUrl: item.originalUrl,
-        createdAt: item.createdAt,
+        pid: item.pid,
+        productUrl: item.productUrl,
         sizes: JSON.parse(item.sizes),
     };
 }
@@ -66,7 +65,7 @@ async function addLinkV2(userId, productUrl, selectedSize, statusUrl) {
         url: productUrl,
         selectedSize,
         statusUrl,
-        createdAt: Date.now(),
+        createdAt: now,
         lastCheckedAt: now
     };
 
