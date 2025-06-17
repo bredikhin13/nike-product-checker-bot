@@ -59,18 +59,20 @@ async function removePendingSelection(userId, pid) {
     }));
 }
 
-async function addLinkV2(chatId, productUrl, selectedSize, statusUrl) {
+async function addLinkV2(userId, productUrl, selectedSize, statusUrl) {
     const now = Date.now();
+    const item = {
+        userId,
+        url: productUrl,
+        selectedSize,
+        statusUrl,
+        createdAt: Date.now(),
+        lastCheckedAt: now
+    };
+
     await client.send(new PutItemCommand({
         TableName: LINKS_TABLE_NAME,
-        Item: {
-            chatId,
-            url: productUrl,
-            selectedSize,
-            statusUrl,
-            createdAt: Date.now(),
-            lastCheckedAt: now
-        }
+        Item: marshall(item)
     }));
 }
 
