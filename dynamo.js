@@ -39,9 +39,9 @@ async function getPendingSelection(userId, pid) {
     }));
 
     logger.info({res}, "Result");
+    if (!res.Item) return null;
     const item = unmarshall(res.Item);
     logger.info({item}, "Item");
-    if (!item) return null;
 
     return {
         userId: item.userId,
@@ -62,7 +62,7 @@ async function removePendingSelection(userId, pid) {
 async function addLinkV2(chatId, productUrl, selectedSize, statusUrl) {
     const now = Date.now();
     await client.send(new PutItemCommand({
-        TableName: LINKS_TABLE,
+        TableName: LINKS_TABLE_NAME,
         Item: {
             chatId,
             url: productUrl,
