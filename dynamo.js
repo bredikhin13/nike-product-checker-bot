@@ -51,7 +51,7 @@ async function getPendingSelection(userId, pid) {
 async function removePendingSelection(userId, pid) {
     await client.send(new DeleteItemCommand({
         TableName: PENDING_SELECTIONS_TABLE_NAME,
-        Key: { userId, pid }
+        Key: marshall({ userId, pid })
     }));
 }
 

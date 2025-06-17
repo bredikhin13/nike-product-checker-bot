@@ -18,7 +18,7 @@ resource "aws_iam_policy_attachment" "lambda_logs_attach" {
 }
 
 resource "aws_iam_role_policy" "lambda_dynamodb_policy" {
-  name = "LambdaDynamoDBPolicy"
+  name = "LambdaDynamoDBPolicy_links"
   role = aws_iam_role.lambda_exec_role.name
 
   policy = jsonencode({
@@ -41,7 +41,7 @@ resource "aws_iam_role_policy" "lambda_dynamodb_policy" {
 }
 
 resource "aws_iam_role_policy" "lambda_dynamodb_policy_pending_selections" {
-  name = "LambdaDynamoDBPolicy"
+  name = "LambdaDynamoDBPolicy_pending_selections"
   role = aws_iam_role.lambda_exec_role.name
 
   policy = jsonencode({
