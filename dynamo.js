@@ -1,4 +1,3 @@
-// dynamo.js
 const {
     DynamoDBClient,
     ScanCommand,
@@ -7,6 +6,7 @@ const {
     DeleteItemCommand,
     QueryCommand, GetItemCommand
 } = require('@aws-sdk/client-dynamodb');
+const logger = require("./logger");
 const {unmarshall, marshall} = require('@aws-sdk/util-dynamodb');
 
 const client = new DynamoDBClient({region: 'eu-central-1'}); // замените при необходимости
@@ -17,9 +17,11 @@ const PENDING_SELECTIONS_TABLE_NAME = "PendingSelections";
 async function savePendingSelection(chatId, pid, productUrl, sizes) {
     const expiresAt = Math.floor(Date.now() / 1000) + 3600; // TTL = 1 час
     const sizesStr = JSON.stringify(sizes);
+    const item = { chatId, pid, productUrl, sizesStr, expiresAt }
+    logger.info({sizesStr, item}, "Saving pending selection");
     await client.send(new PutItemCommand({
         TableName: PENDING_SELECTIONS_TABLE_NAME,
-        Item: { chatId, pid, productUrl, sizesStr, expiresAt }
+        Item: item
     }));
 }
 
