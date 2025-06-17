@@ -21,7 +21,7 @@ async function savePendingSelection(chatId, pid, productUrl, sizes) {
     logger.info({sizesStr, item}, "Saving pending selection");
     await client.send(new PutItemCommand({
         TableName: PENDING_SELECTIONS_TABLE_NAME,
-        Item: item
+        Item: marshall(item)
     }));
 }
 
